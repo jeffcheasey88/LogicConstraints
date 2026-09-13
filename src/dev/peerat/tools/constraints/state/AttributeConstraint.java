@@ -2,7 +2,7 @@ package dev.peerat.tools.constraints.state;
 
 import dev.peerat.parser.java.Variable;
 
-public class AttributeConstraint{
+public class AttributeConstraint extends ConstraintElement{
 	
 	private AttributeConstraint parent;
 	private Variable variable;

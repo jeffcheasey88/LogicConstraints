@@ -1,28 +1,29 @@
 package dev.peerat.tools.constraints;
 
-import static dev.peerat.parser.java.visitor.JavaVisitor.classBase;
-import static dev.peerat.parser.java.visitor.JavaVisitor.collect;
-import static dev.peerat.parser.java.visitor.JavaVisitor.seq;
-import static dev.peerat.parser.java.visitor.JavaVisitor.variable;
+import static dev.peerat.parser.java.visitor.JavaVisitor.*;
+import static dev.peerat.parser.visitor.Visitors.*;
 
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import dev.peerat.parser.java.ClassBase;
 import dev.peerat.parser.java.Variable;
 import dev.peerat.tools.constraints.state.Constraint;
+import dev.peerat.tools.constraints.state.ConstraintState;
 
 public class ConstraintBuilderContext{
 	
 	private ClassBase clazz;
 	private String type;
 	private String variableName;
-	private Set<Constraint> constraints;
+	private ConstraintState state;
 	
 	public ConstraintBuilderContext(ClassBase clazz, String type){
 		this.clazz = clazz;
 		this.type = type;
-		this.constraints = new HashSet<>();
+		this.state = new ConstraintState();
 	}
 	
 	public Variable getVariable(String name){
@@ -33,15 +34,16 @@ public class ConstraintBuilderContext{
 		return this.variableName;
 	}
 	
-	public Set<Constraint> getConstraints(){
-		return this.constraints;
-	}
-	
 	public void setVariableName(String name){
 		this.variableName = name;
 	}
 	
-	public void addConstraint(Constraint constraint){
-		this.constraints.add(constraint);
+	public void addConstraint(Variable variable, Constraint constraint){
+		this.state.addConstraint(variable, constraint);
 	}
+	
+	public List<Constraint> getConstraints(Variable variable){
+		return state.getConstraints(variable);
+	}
+	
 }

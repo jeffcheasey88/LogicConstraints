@@ -1,16 +1,26 @@
 package dev.peerat.tools.constraints;
 
-import static dev.peerat.parser.java.visitor.JavaVisitor.*;
+import static dev.peerat.parser.java.visitor.JavaVisitor.allClass;
+import static dev.peerat.parser.java.visitor.JavaVisitor.allClassBase;
+import static dev.peerat.parser.java.visitor.JavaVisitor.allFunction;
+import static dev.peerat.parser.java.visitor.JavaVisitor.allParameter;
+import static dev.peerat.parser.java.visitor.JavaVisitor.allStaticValue;
+import static dev.peerat.parser.java.visitor.JavaVisitor.allVariableAccessValue;
+import static dev.peerat.parser.java.visitor.JavaVisitor.classBase;
+import static dev.peerat.parser.java.visitor.JavaVisitor.parameter;
+import static dev.peerat.parser.java.visitor.JavaVisitor.variable;
 import static dev.peerat.parser.visitor.Visitors.collect;
 import static dev.peerat.parser.visitor.Visitors.seq;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import dev.peerat.parser.java.ClassBase;
 import dev.peerat.parser.java.Function;
@@ -149,8 +159,8 @@ public class ConstraintReader{
 		return result;
 	}
 	
-	private List<Variable> allAffectedVariable(ClassBase model, String variableName, IfOperation ifOperation){
-		List<Variable> result = new LinkedList<>();
+	private Set<Variable> allAffectedVariable(ClassBase model, String variableName, IfOperation ifOperation){
+		Set<Variable> result = new HashSet<>();
 		List<VariableAccessValue> variableAccess = ifOperation.visit(
 				collect(
 						allVariableAccessValue()

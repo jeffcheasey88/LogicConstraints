@@ -195,11 +195,13 @@ public class ConstraintReader{
 				if(methodCall.base() == null){
 					if(methodCall.getToken().getValue().equals("error")){
 						if(methodCall.getParameters() == null || methodCall.getParameters().isEmpty()){
-							
+							effects.add(new ConstraintErrorEffect((String) null));
 						}else if(methodCall.getParameters().size() == 1){
 							Value parameter = methodCall.getParameters().get(0);
 							if(parameter instanceof StaticValue){
 								effects.add(new ConstraintErrorEffect(((StaticValue)parameter).getToken().getValue()));
+							}else{
+								effects.add(new ConstraintErrorEffect(parameter));
 							}
 						}
 					}else if(methodCall.getToken().getValue().equals("reState")){

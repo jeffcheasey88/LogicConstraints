@@ -1,30 +1,14 @@
 package dev.peerat.tools.constraints;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 
-import dev.peerat.parser.java.JavaFile;
-import dev.peerat.parser.java.JavaParser;
-import dev.peerat.parser.java.JavaProject;
+import dev.peerat.loaders.parser.ProjectLoader;
 
 public class Example{
 
 	public static void main(String[] args) throws Exception{
-		ConstraintReader reader = new ConstraintReader();
-
-		JavaProject project = new JavaProject(false);
-		JavaParser parser = new JavaParser();
-		JavaFile file = new JavaFile();
-
-		BufferedReader fileReader = new BufferedReader(
-				new FileReader(new File("./src/dev/peerat/tools/constraints/Example.java")));
-		parser.parse(fileReader, file);
-		fileReader.close();
-		project.addFile(file, true);
-
-		reader.readProject(project);
-
+		ProjectReader.getInstance().addProject(new File("./src/dev/peerat/tools/constraints/Example.java"));
+		ProjectLoader.getLoader().load();
 	}
 
 	public static void exampleUsage(MyObject obj){

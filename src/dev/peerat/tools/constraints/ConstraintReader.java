@@ -35,6 +35,7 @@ import dev.peerat.parser.java.printer.JavaPrinter;
 import dev.peerat.parser.java.printer.JavaPrinter.JavaPrintProvider;
 import dev.peerat.parser.java.printer.JavaPrinter.Writer;
 import dev.peerat.parser.java.value.BiValue;
+import dev.peerat.parser.java.value.LambdaValue;
 import dev.peerat.parser.java.value.MethodCallValue;
 import dev.peerat.parser.java.value.StaticValue;
 import dev.peerat.parser.java.value.Value;
@@ -42,6 +43,7 @@ import dev.peerat.parser.java.value.VariableAccessValue;
 import dev.peerat.tools.constraints.state.Constraint;
 import dev.peerat.tools.constraints.state.ConstraintEffect;
 import dev.peerat.tools.constraints.state.ConstraintErrorEffect;
+import dev.peerat.tools.constraints.state.ConstraintRestateEffect;
 import dev.peerat.tools.constraints.state.ConstraintState;
 
 public class ConstraintReader{
@@ -139,12 +141,9 @@ public class ConstraintReader{
 			for(Function function : selfRules){
 				Parameter variable = function.getParameters().get(0);
 				ConstraintBuilderContext builder = new ConstraintBuilderContext(
-						project.visit(collect(allClassBase().name(seq(variable.getType().getType().getName().getValue())))).toElement(),
-						variable.getType().getType().getName().getValue()
+						project.visit(collect(allClassBase().name(seq(variable.getType().getType().getName().getValue())))).toElement()
 						);
 				result.put(model, builder);
-				
-				builder.setVariableName(variable.getName().getValue());
 				
 				for(JavaElement element : function.getElements()){
 					if(element instanceof IfOperation){
@@ -203,6 +202,9 @@ public class ConstraintReader{
 								effects.add(new ConstraintErrorEffect(((StaticValue)parameter).getToken().getValue()));
 							}
 						}
+					}else if(methodCall.getToken().getValue().equals("reState")){
+						LambdaValue parameter = (LambdaValue) methodCall.getParameters().get(0);
+						effects.add(new ConstraintRestateEffect(parameter.getElements()));
 					}
 				}
 			}

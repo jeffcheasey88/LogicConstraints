@@ -23,7 +23,13 @@ public class Example{
 
 	}
 
-	class MyObjectConstraints implements SelfConstraints<MyObject>{
+	class MyRepository{
+		
+		int countInstanceOfBothPresent(){ return 0;}
+		
+	}
+	
+	class MyObjectConstraints implements SelfConstraints<MyObject>, EnvironmentalConstraints{
 
 		@Override
 		public void check(MyObject value){
@@ -37,6 +43,10 @@ public class Example{
 						value.bothPresent = true;
 					});
 			}
+		}
+		
+		public void check(MyObject value, MyRepository repository){
+			if(value.bothPresent && repository.countInstanceOfBothPresent() > 0) error(new RuntimeException("It can only be one MyObject with both value present !"));
 		}
 
 	}

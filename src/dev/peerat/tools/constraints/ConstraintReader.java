@@ -1,16 +1,7 @@
 package dev.peerat.tools.constraints;
 
-import static dev.peerat.parser.java.visitor.JavaVisitor.allClass;
-import static dev.peerat.parser.java.visitor.JavaVisitor.allClassBase;
-import static dev.peerat.parser.java.visitor.JavaVisitor.allFunction;
-import static dev.peerat.parser.java.visitor.JavaVisitor.allParameter;
-import static dev.peerat.parser.java.visitor.JavaVisitor.allStaticValue;
-import static dev.peerat.parser.java.visitor.JavaVisitor.allVariableAccessValue;
-import static dev.peerat.parser.java.visitor.JavaVisitor.classBase;
-import static dev.peerat.parser.java.visitor.JavaVisitor.parameter;
-import static dev.peerat.parser.java.visitor.JavaVisitor.variable;
-import static dev.peerat.parser.visitor.Visitors.collect;
-import static dev.peerat.parser.visitor.Visitors.seq;
+import static dev.peerat.parser.java.visitor.JavaVisitor.*;
+import static dev.peerat.parser.visitor.Visitors.*;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -126,36 +117,84 @@ public class ConstraintReader{
 		Map<ClassBase, ConstraintBuilderContext> result = new HashMap<>();
 		List<ClassBase> models = project.visit(collect(allClass().isNotExtend().hasNoImplementation())).toList();
 		for(ClassBase model : models){
-			List<Function> selfRules = project.visit(
-					allClass()
-					.oneImplementation(seq("SelfConstraints<"+model.getName().getName().getValue()+">"))
-					.oneChild(
-							collect(
-									allFunction()
-									.type(seq("void"))
-									.name(seq("check"))
-									.countParameter(1, parameter())
-									.oneParameter(parameter().type(seq(model.getName().getName().getValue())))
-									)
-					)).toList();
-			for(Function function : selfRules){
-				Parameter variable = function.getParameters().get(0);
-				ConstraintBuilderContext builder = new ConstraintBuilderContext(
-						project.visit(collect(allClassBase().name(seq(variable.getType().getType().getName().getValue())))).toElement()
-						);
-				result.put(model, builder);
-				
-				for(JavaElement element : function.getElements()){
-					if(element instanceof IfOperation){
-						Constraint constraint = buildConstraint(variable.getName().getValue(), (IfOperation) element);
-						for(Variable affected : allAffectedVariable(model, variable.getName().getValue(), (IfOperation) element)){
-							builder.addConstraint(affected, constraint);
-						}
+			readSelfConstraints(project, model, result);
+			readEnvironmentalConstraints(project, model, result);
+		}
+		return result;
+	}
+	
+	private void readSelfConstraints(JavaProject project, ClassBase model, Map<ClassBase, ConstraintBuilderContext> result){
+		List<Function> selfRules = project.visit(
+				allClass()
+				.oneImplementation(seq("SelfConstraints<"+model.getName().getName().getValue()+">"))
+				.oneChild(
+						collect(
+								allFunction()
+								.type(seq("void"))
+								.name(seq("check"))
+								.countParameter(1, parameter())
+								.oneParameter(parameter().type(seq(model.getName().getName().getValue())))
+								)
+				)).toList();
+		for(Function function : selfRules){
+			Parameter variable = function.getParameters().get(0);
+			ConstraintBuilderContext builder = result.get(model);
+			if(builder == null){
+				result.put(model, builder = new ConstraintBuilderContext(
+					project.visit(collect(allClassBase().name(seq(variable.getType().getType().getName().getValue())))).toElement()
+					));
+			}
+			
+			for(JavaElement element : function.getElements()){
+				if(element instanceof IfOperation){
+					Constraint constraint = buildConstraint(variable.getName().getValue(), (IfOperation) element);
+					for(Variable affected : allAffectedVariable(model, variable.getName().getValue(), (IfOperation) element)){
+						builder.addConstraint(affected, constraint);
 					}
 				}
 			}
 		}
-		return result;
+	}
+	
+	private void readEnvironmentalConstraints(JavaProject project, ClassBase model, Map<ClassBase, ConstraintBuilderContext> result){
+		List<Function> envRules = project.visit(
+				allClass()
+				.oneImplementation(seq("EnvironmentalConstraints"))
+				.oneChild(
+						collect(
+							allFunction()
+							.oneParameter(parameter().type(seq(model.getName().getName().getValue())))
+							.validate(func -> func.getParameters().size() > 1)
+						)
+				)).toList();
+		for(Function function : envRules){
+			Parameter variable = null;
+			List<Parameter> envParameters = new LinkedList<>();
+			for(Parameter parameter : function.getParameters()){
+				if(variable == null){
+					if(parameter.getType().getType().toString().equals(model.getName().getName().getValue())){
+						variable = parameter;
+						continue;
+					}
+				}
+				envParameters.add(parameter);
+			}
+			ConstraintBuilderContext builder = result.get(model);
+			if(builder == null){
+				result.put(model, builder = new ConstraintBuilderContext(
+					project.visit(collect(allClassBase().name(seq(variable.getType().getType().getName().getValue())))).toElement()
+					));
+			}
+			
+			for(JavaElement element : function.getElements()){
+				if(element instanceof IfOperation){
+					Constraint constraint = buildConstraint(variable.getName().getValue(), (IfOperation) element);
+					for(Variable affected : allAffectedVariable(model, variable.getName().getValue(), (IfOperation) element)){
+						builder.addConstraint(affected, constraint);
+					}
+				}
+			}
+		}
 	}
 	
 	private Set<Variable> allAffectedVariable(ClassBase model, String variableName, IfOperation ifOperation){

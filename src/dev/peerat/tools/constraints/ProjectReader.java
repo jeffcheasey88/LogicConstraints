@@ -24,15 +24,20 @@ public class ProjectReader implements dev.peerat.loaders.parser.ProjectReader{
 	}
 	
 	private Set<File> projects;
+	private Set<String> namedProjects;
 	
 	private ProjectReader(){
 		this.projects = new HashSet<>();
+		this.namedProjects = new HashSet<>();
 	}
 	
 	public void addProject(File file){
 		this.projects.add(file);
 	}
-
+	
+	public void addProject(String name){
+		this.namedProjects.add(name);
+	}
 	
 	@Override
 	public Consumer<ProjectSupplier> getProjectSupplier(){
@@ -40,6 +45,9 @@ public class ProjectReader implements dev.peerat.loaders.parser.ProjectReader{
 			ConstraintReader constraintReader = new ConstraintReader();
 			for(File project : projects){
 				constraintReader.readProject(loader.getProject(project));
+			}
+			for(String projectName : namedProjects){
+				constraintReader.readProject(loader.getProject(projectName));
 			}
 		};
 	}

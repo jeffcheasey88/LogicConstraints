@@ -5,11 +5,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 import dev.peerat.loaders.parser.Consumer;
+import dev.peerat.loaders.parser.ProcessorService;
 import dev.peerat.loaders.parser.ProjectLoader;
+import dev.peerat.loaders.parser.ProjectOperationType;
 import dev.peerat.loaders.parser.ProjectSupplier;
 import dev.peerat.loaders.parser.ReadOrder;
+import dev.peerat.loaders.parser.processors.AnnotationProcessor;
+import dev.peerat.loaders.parser.processors.Processor;
 
-public class ProjectReader implements dev.peerat.loaders.parser.ProjectReader{
+public class ProjectReader implements dev.peerat.loaders.parser.ProjectReader, ProcessorService{
 	
 	private static ProjectReader READER = new ProjectReader();
 
@@ -19,7 +23,8 @@ public class ProjectReader implements dev.peerat.loaders.parser.ProjectReader{
 	
 	static {
 		
-		ProjectLoader.getLoader().register(READER, ReadOrder.HIGHT);
+		Processor.getInstance().addService(READER);
+		AnnotationProcessor.registerAnnotations("dev.peerat.tools.constraints.ConstraintProject");
 		
 	}
 	
@@ -50,6 +55,11 @@ public class ProjectReader implements dev.peerat.loaders.parser.ProjectReader{
 				constraintReader.readProject(loader.getProject(projectName));
 			}
 		};
+	}
+
+	@Override
+	public void process(Processor processor, ProjectLoader loader) throws Exception{
+		loader.register(READER, ProjectOperationType.UPDATE, ReadOrder.HIGHT);
 	}
 
 }
